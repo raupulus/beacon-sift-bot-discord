@@ -1,0 +1,9 @@
+services:
+  bot-discord:
+    build: .
+    container_name: beacon-sift-bot-discord
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
