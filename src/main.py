@@ -69,10 +69,10 @@ class BeaconDiscordBot(discord.Client):
             guild = discord.Object(id=self.settings.dev_guild_id)
             self.tree.copy_global_to(guild=guild)
             await self.tree.sync(guild=guild)
-            logger.info("Slash commands sincronizados en guild dev %s.", self.settings.dev_guild_id)
+            logger.info("Slash commands synced to dev guild %s.", self.settings.dev_guild_id)
         else:
             await self.tree.sync()
-            logger.info("Slash commands sincronizados globalmente.")
+            logger.info("Slash commands synced globally.")
 
         self._reverb_task = asyncio.create_task(
             self.reverb_listener.run_forever(self._stop_event),
@@ -80,7 +80,7 @@ class BeaconDiscordBot(discord.Client):
         )
 
     async def on_ready(self) -> None:
-        logger.info("Bot de Discord conectado como %s", self.user)
+        logger.info("Discord bot connected as %s", self.user)
 
     async def close(self) -> None:
         """Detiene Reverb y cierra recursos de red y SQLite ordenadamente."""
@@ -92,7 +92,7 @@ class BeaconDiscordBot(discord.Client):
         await self.api_client.close()
         await self.storage.close()
         await super().close()
-        logger.info("Recursos de beacon-sift-bot-discord cerrados.")
+        logger.info("beacon-sift-bot-discord resources closed.")
 
 
 def main() -> None:
@@ -101,7 +101,7 @@ def main() -> None:
     configure_logging(settings.log_level)
 
     if not settings.discord_bot_token.strip():
-        logger.error("Falta DISCORD_BOT_TOKEN en el entorno (.env). Abortando inicio.")
+        logger.error("Missing DISCORD_BOT_TOKEN in environment (.env). Aborting startup.")
         sys.exit(1)
 
     bot = BeaconDiscordBot(settings)

@@ -52,11 +52,11 @@ class AlertDispatcher:
             return True
         except (discord.Forbidden, discord.NotFound):
             logger.warning(
-                "Sin acceso o canal inexistente (%s); pausando alertas automáticas.",
+                "Missing access or unknown channel (%s); pausing automatic alerts.",
                 channel_id,
             )
             await self.storage.set_paused(channel_id, True)
             return False
         except discord.HTTPException as exc:
-            logger.warning("Error HTTP de Discord enviando a canal %s: %s", channel_id, exc)
+            logger.warning("Discord HTTP error sending to channel %s: %s", channel_id, exc)
             return False
