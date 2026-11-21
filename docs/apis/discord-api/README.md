@@ -2,7 +2,7 @@
 
 - **Fuentes oficiales descargadas:** [`src/reference.md`](./src/reference.md), [`src/rate-limits.md`](./src/rate-limits.md), [`src/application-commands.md`](./src/application-commands.md), [`src/receiving-and-responding.md`](./src/receiving-and-responding.md), [`src/message.md`](./src/message.md), [`src/permissions.md`](./src/permissions.md), [`src/gateway.md`](./src/gateway.md) (origen: `https://docs.discord.com/developers/...`, `last-modified: Thu, 19 Nov 2026`)
 - **Fecha de descarga de fuentes:** `2026-11-20`
-- **Fecha de verificación real:** `2026-11-20` *(parcial: transporte HTTPS a `discord.com/api/v10`, cabeceras `Authorization`/`User-Agent` y error JSON `401` verificados en vivo; los flujos autenticados quedan marcados como `⚠️ sin verificar` al no existir `DISCORD_BOT_TOKEN` real en el entorno)*
+- **Fecha de verificación real:** `2026-11-22` *(verificado en vivo con token real desde `.env` local: `GET /users/@me`, Gateway WebSocket con `Intents.default()`, `CommandTree.sync()` global de los 11 comandos y entrega E2E real de `Embed` desde `web/` + Reverb; quedan `⚠️ sin verificar` únicamente interacciones en vivo, hilos y errores `403`/`404`/`429` reales en producción)*
 - **Cliente usado por el servicio:** `discord.py 2.7.1` (`discord.http.Route.BASE == "https://discord.com/api/v10"`)
 
 ---
@@ -35,11 +35,12 @@ Qué módulos de `bot-discord/` llaman a cada recurso y cómo configuramos `disc
 | Base URL `https://discord.com/api/v10` y `discord.py 2.7.1` | ✅ Verificado (`2026-11-20`) | `discord.http.Route.BASE == "https://discord.com/api/v10"` + petición HTTPS real |
 | Respuesta `401` ante token inválido (`Authorization: Bot ...`) | ✅ Verificado (`2026-11-20`) | `GET https://discord.com/api/v10/users/@me` devuelve `HTTP 401` con `{"message": "401: Unauthorized", "code": 0}` |
 | Especificación Markdown oficial descargada (`docs.discord.com`) | ✅ Descargada (`2026-11-20`) | 7 documentos originales intactos en `src/` |
-| Gateway WebSocket (`Intents.default()`) y `on_ready()` | `⚠️ sin verificar` | Requiere `DISCORD_BOT_TOKEN` real |
-| Sincronización de *slash commands* (`tree.sync()` global / `guild`) | `⚠️ sin verificar` | Requiere `DISCORD_BOT_TOKEN` real (`DISCORD_DEV_GUILD_ID` opcional) |
-| Respuestas a interacciones (`send_message`, `defer()`, `followup.send()`, `ephemeral`) | `⚠️ sin verificar` | Cubierto solo mediante mocks en `tests/test_commands.py` |
-| Envío de *Embeds* en canales/hilos (`fetch_channel()`, `channel.send()`) y errores `403`/`404`/`429` | `⚠️ sin verificar` | Cubierto solo mediante mocks en `tests/test_dispatcher.py` |
+| Gateway WebSocket (`Intents.default()`) y `on_ready()` | ✅ Verificado (`2026-11-22`) | Conexión real a Discord Gateway sin intents privilegiados (`GET /users/@me` `200 OK`) |
+| Sincronización de *slash commands* (`tree.sync()` global) | ✅ Verificado (`2026-11-22`) | Los 11 *slash commands* registrados globalmente en Discord (`DISCORD_DEV_GUILD_ID` opcional) |
+| Envío real de *Embeds* en canal de texto (`get_channel()`, `channel.send()`) | ✅ Verificado (`2026-11-22`) | Prueba E2E real: RSS CVE simulado → `web/` → Reverb → `bot-discord` → Embed crítico en canal de servidor |
+| Respuestas a interacciones (`send_message`, `defer()`, `followup.send()`, `ephemeral`) | `⚠️ sin verificar` | Cubierto mediante mocks en `tests/test_commands.py`; pendiente pulsación en vivo |
+| Hilos (`thread`), `fetch_channel()` frío y errores `403`/`404`/`429` reales | `⚠️ sin verificar` | Cubierto mediante mocks en `tests/test_dispatcher.py` |
 
 ---
 
-> Creado: 2026-11-20 · Última revisión: 2026-11-20
+> Creado: 2026-11-20 · Última revisión: 2026-11-22

@@ -156,7 +156,7 @@ Protocolo obligatorio aplicable a **todas** las tareas presentes y futuras en es
 | `DISCORD_DEV_GUILD_ID` + sync global posterior | `main.py` (`setup_hook`) | Si `copy_global_to(guild=...)` registró comandos locales y luego se arranca solo global, el dev guild mostrará comandos duplicados. |
 | Límite de 10 000 peticiones inválidas / 10 min | `dispatcher.py` | Repetir `401`/`403`/`429` causa ban temporal Cloudflare; mantener siempre la auto-pausa ante `Forbidden`/`NotFound`. |
 | Envío en hilos requiere permiso específico | `dispatcher.py` | `SEND_MESSAGES` no incluye hilos; el bot necesita `SEND_MESSAGES_IN_THREADS` (y `EMBED_LINKS`) en el canal/hilo destino. |
-| Flujos Discord en vivo sin token | `main.py`, `commands/*`, `dispatcher.py` | Transporte HTTPS/`401` verificado contra `discord.com/api/v10`, pero Gateway, sync y envíos reales siguen `⚠️ sin verificar`. |
+| Interacciones en vivo e hilos | `commands/*`, `dispatcher.py` | Gateway, `tree.sync()` y entrega E2E de `Embed` verificados el `2026-11-22`; hilos (`thread`) y `403`/`404`/`429` reales siguen `⚠️ sin verificar`. |
 
 ### Checklist antes de dar cualquier tarea por terminada
 - [ ] Documentación del módulo tocado actualizada en el **mismo commit**
