@@ -27,7 +27,7 @@ bot-discord/
 ├── .gitignore                          # Python, .venv, .env, SQLite local y /docs/{planning,auditorias}/
 ├── .dockerignore                       # Exclusiones para build Docker
 ├── Dockerfile                          # Imagen python:3.12-slim ejecutada como botuser
-├── docker-compose.yml                  # Servicio independiente con volumen ./data:/app/data
+├── docker-compose.yml                  # Servicio independiente con volumen nombrado bot_discord_data:/app/data
 ├── pyproject.toml                      # Dependencias (uv/pip), pytest y ruff
 ├── uv.lock                             # Lockfile reproducible de dependencias
 ├── images/                             # Logotipo oficial e iconos del bot (logo.svg, PNGs)
@@ -66,10 +66,10 @@ bot-discord/
 │   ├── api_client.py                   # Cliente HTTP async (httpx) para /api/v1/*
 │   ├── reverb_client.py                # Cliente WebSocket Pusher v7 (websockets)
 │   ├── embeds.py                       # Constructores de Discord Embeds con paleta HUD
-│   ├── permissions.py                  # Validación de administrator/manage_channels y DISCORD_ADMIN_IDS
-│   ├── dispatcher.py                   # Filtrado, deduplicación y pausa automática ante Forbidden/NotFound
+│   ├── permissions.py                  # Validación de administrator/manage_channels en servidores y DMs
+│   ├── dispatcher.py                   # Reparto concurrente acotado, deduplicación, poda y auto-pausa
 │   └── commands/                       # info.py y subscriptions.py
-└── tests/                              # Tests automatizados pytest / pytest-asyncio (14 tests)
+└── tests/                              # Tests automatizados pytest / pytest-asyncio (19 tests)
 ```
 
 ### Reglas de aislamiento y ecosistema `beacon-sift`
@@ -154,7 +154,6 @@ Protocolo obligatorio aplicable a **todas** las tareas presentes y futuras en es
 | `Choice[str] \| str \| None` en `@app_commands` | `commands/info.py`, `commands/subscriptions.py` | `discord.py 2.7.1` lanza `TypeError` al registrar si se incluye `str` en la unión; usar siempre `app_commands.Choice[str] \| None`. |
 | Ventana de 3 s de interacción | `commands/*` | Todo comando que consulta `web/` o SQLite debe llamar antes a `interaction.response.defer(...)`. |
 | `DISCORD_DEV_GUILD_ID` + sync global posterior | `main.py` (`setup_hook`) | Si `copy_global_to(guild=...)` registró comandos locales y luego se arranca solo global, el dev guild mostrará comandos duplicados. |
-| `prune_dispatched()` sin programar | `storage.py` | Existe el método y test, pero ningún flujo en `src/` lo invoca periódicamente aún. |
 | Límite de 10 000 peticiones inválidas / 10 min | `dispatcher.py` | Repetir `401`/`403`/`429` causa ban temporal Cloudflare; mantener siempre la auto-pausa ante `Forbidden`/`NotFound`. |
 | Envío en hilos requiere permiso específico | `dispatcher.py` | `SEND_MESSAGES` no incluye hilos; el bot necesita `SEND_MESSAGES_IN_THREADS` (y `EMBED_LINKS`) en el canal/hilo destino. |
 | Flujos Discord en vivo sin token | `main.py`, `commands/*`, `dispatcher.py` | Transporte HTTPS/`401` verificado contra `discord.com/api/v10`, pero Gateway, sync y envíos reales siguen `⚠️ sin verificar`. |

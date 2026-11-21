@@ -75,7 +75,12 @@ async def test_dispatcher_sends_embeds_dedups_and_pauses_on_forbidden_or_not_fou
         ch103 = FakeChannel(103, fail_forbidden=True)
         client = FakeDiscordClient({101: ch101, 103: ch103})
 
-        dispatcher = AlertDispatcher(client, storage, Settings(discord_show_thumbnails=True))
+        dispatcher = AlertDispatcher(
+            client,
+            storage,
+            Settings(discord_show_thumbnails=True),
+            min_interval_seconds=0.0,
+        )
         delivered = await dispatcher.dispatch_item(_make_item(77, "cve", Priority.HIGH))
 
         assert delivered == 1
@@ -88,5 +93,45 @@ async def test_dispatcher_sends_embeds_dedups_and_pauses_on_forbidden_or_not_fou
 
         # Reenvío del mismo item -> deduplicado, 0 envíos
         assert await dispatcher.dispatch_item(_make_item(77, "cve", Priority.HIGH)) == 0
+    finally:
+        await storage.close()
+
+
+async def test_dispatcher_prunes_periodically_and_isolates_dynamic_types(tmp_path: Path) -> None:
+    storage = BotStorage(tmp_path / "bot.db")
+    await storage.initialize()
+    try:
+        await storage.subscribe(201, "iot", Priority.LOW)
+        await storage.subscribe(202, "cve", Priority.LOW)
+        await storage.mark_dispatched(999, 1)
+        await storage._db().execute(
+            "UPDATE dispatched_items SET dispatched_at = ? WHERE channel_id = ?",
+            ("2020-01-01T00:00:00+00:00", 999),
+        )
+        await storage._db().commit()
+
+        ch201 = FakeChannel(201)
+        ch202 = FakeChannel(202)
+        client = FakeDiscordClient({201: ch201, 202: ch202})
+        dispatcher = AlertDispatcher(
+            client,
+            storage,
+            Settings(),
+            prune_every=2,
+            prune_retention_days=30,
+            max_concurrency=4,
+            min_interval_seconds=0.0,
+        )
+
+        assert await dispatcher.dispatch_item(_make_item(1, "iot", Priority.MEDIUM)) == 1
+        assert len(ch201.sent_embeds) == 1
+        assert len(ch202.sent_embeds) == 0
+        assert await storage.was_dispatched(999, 1) is True
+
+        # 2ª entrega dispara la poda por antigüedad (elimina fila de 2020 y conserva recientes)
+        assert await dispatcher.dispatch_item(_make_item(2, "iot", Priority.HIGH)) == 1
+        assert await storage.was_dispatched(201, 1) is True
+        assert await storage.was_dispatched(201, 2) is True
+        assert await storage.was_dispatched(999, 1) is False
     finally:
         await storage.close()

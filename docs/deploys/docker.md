@@ -33,7 +33,6 @@ Guía verificada directamente contra [`Dockerfile`](../../Dockerfile), [`docker-
    ```
 2. Rellenar en `.env` al menos:
    - `DISCORD_BOT_TOKEN`
-   - `DISCORD_ADMIN_IDS` (IDs *snowflake* separados por coma)
    - `DISCORD_DEV_GUILD_ID` *(solo en desarrollo; dejar vacío en producción para sincronización global únicamente)*
    - `WEB_API_BASE_URL` y `REVERB_WS_URL` apuntando al servicio `web/` accesible desde Docker *(evitar `127.0.0.1` dentro del contenedor salvo red `host`)*
    - `REVERB_APP_KEY` y `REVERB_CHANNEL` coincidentes con `web/`
@@ -49,11 +48,11 @@ Guía verificada directamente contra [`Dockerfile`](../../Dockerfile), [`docker-
 
 ---
 
-## 4. Persistencia SQLite y permisos de `./data`
+## 4. Persistencia SQLite con volumen nombrado
 
-- [`docker-compose.yml`](../../docker-compose.yml) monta `./data:/app/data` con `restart: unless-stopped`.
-- Como la imagen corre como `botuser` con `BOT_DB_PATH=/app/data/bot.db`, si `./data` existe previamente con propietario `root` en un VPS Linux, ajusta permisos para que `botuser` pueda crear `bot.db`, `bot.db-wal` y `bot.db-shm`.
-- Para copias de seguridad consistentes en modo WAL, realiza backup en frío con el contenedor detenido o mediante `.backup` de `sqlite3`.
+- [`docker-compose.yml`](../../docker-compose.yml) monta el volumen nombrado `bot_discord_data:/app/data`, fija `BOT_DB_PATH=/app/data/bot.db` y configura `restart: unless-stopped`.
+- Al usar un **volumen nombrado** en lugar de un *bind-mount* `./data`, Docker inicializa automáticamente el volumen heredando los permisos `botuser:botuser` definidos en el [`Dockerfile`](../../Dockerfile), evitando errores `readonly database` en servidores Linux VPS al recrear o actualizar el contenedor.
+- Para copias de seguridad consistentes en modo WAL (`bot.db`, `bot.db-wal`, `bot.db-shm`), realiza backup usando `.backup` de `sqlite3` dentro del contenedor o con el contenedor detenido brevemente.
 
 ---
 
@@ -67,4 +66,4 @@ docker compose logs --tail=50 bot-discord
 
 ---
 
-> Creado: 2026-11-20 · Última revisión: 2026-11-20
+> Creado: 2026-11-20 · Última revisión: 2026-11-21

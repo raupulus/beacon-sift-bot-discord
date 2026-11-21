@@ -32,6 +32,7 @@ En [`src/main.py`](../../src/main.py):
 1. `main()` carga `Settings()`, configura `logging.basicConfig()` (y silencia `httpx` a `WARNING`), valida `discord_bot_token.strip()` (`sys.exit(1)` si falta) y ejecuta `bot.run(settings.discord_bot_token, log_handler=None)`.
 2. `setup_hook()`:
    - `await self.storage.initialize()`
+   - `await self.storage.prune_dispatched(retention_days=30)`
    - `register_commands(self.tree, self.app_ctx)`
    - Si `settings.dev_guild_id is not None`: `copy_global_to(guild=...)` + `await self.tree.sync(guild=...)`. Si no: `await self.tree.sync()`.
    - Crea tarea `asyncio` `"reverb-listener"` ejecutando `reverb_listener.run_forever(self._stop_event)`.
@@ -86,7 +87,8 @@ En [`src/main.py`](../../src/main.py):
   - `test_info_commands_handle_unavailable_api` (`/status` degradado y `/latest` ante HTTP `503`).
   - `test_subscription_commands_permissions_and_lifecycle` (permisos, validaciones, `/subscribe`, `/pause`, `/filters`, `/resume`, `/unsubscribe`).
 
-> Nota: `BeaconDiscordBot.setup_hook()` y `close()` (`src/main.py`) no tienen test unitario dedicado; solo compilación, `register_commands` e import check Docker.
+- [`tests/test_main_and_config.py`](../../tests/test_main_and_config.py):
+  - `test_setup_hook_initializes_prunes_syncs_and_closes`: ejercita `BeaconDiscordBot.setup_hook()` (inicialización SQLite, poda, registro de los 11 comandos, sync y arranque/cierre de Reverb).
 
 ---
 
@@ -97,4 +99,4 @@ En [`src/main.py`](../../src/main.py):
 
 ---
 
-> Creado: 2026-11-20 · Última revisión: 2026-11-20
+> Creado: 2026-11-20 · Última revisión: 2026-11-21

@@ -8,10 +8,7 @@ from src.config import Settings
 
 
 def can_manage_subscriptions(interaction: discord.Interaction, settings: Settings) -> bool:
-    """Comprueba si el usuario tiene permiso de administración sobre el canal o el bot."""
-    if interaction.user.id in settings.admin_ids:
-        return True
-
+    """Comprueba si el usuario tiene permiso de administración sobre el canal o servidor."""
     if interaction.guild is None:
         return settings.allow_dm_subscriptions
 

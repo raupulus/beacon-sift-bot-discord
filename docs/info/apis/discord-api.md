@@ -16,7 +16,7 @@
 | Gateway WebSocket (`Intents.default()`) | [`src/main.py`](../../../src/main.py) (`BeaconDiscordBot`) | Mantiene sesión del bot, recibe `INTERACTION_CREATE` sin intents privilegiados y evita duplicar logs con `log_handler=None`. | `⚠️ sin verificar` |
 | `CommandTree.sync()` | [`src/main.py`](../../../src/main.py) (`setup_hook`) | Registra los 11 *slash commands*; usa `DISCORD_DEV_GUILD_ID` (copia a guild) si está definido o sync global si no. | `⚠️ sin verificar` |
 | `interaction.response` / `followup` | [`src/commands/info.py`](../../../src/commands/info.py), [`src/commands/subscriptions.py`](../../../src/commands/subscriptions.py) | Respuesta inmediata en `/help` y errores (`ephemeral=True`); `defer()` + `followup.send()` en consultas I/O. | `⚠️ sin verificar` |
-| `interaction.permissions` | [`src/permissions.py`](../../../src/permissions.py) (`can_manage_subscriptions`) | Comprueba `administrator` o `manage_channels` en guilds, más `DISCORD_ADMIN_IDS` y `ALLOW_DM_SUBSCRIPTIONS`. | `⚠️ sin verificar` |
+| `interaction.permissions` | [`src/permissions.py`](../../../src/permissions.py) (`can_manage_subscriptions`) | Comprueba `administrator` o `manage_channels` en guilds y `ALLOW_DM_SUBSCRIPTIONS` en DMs. | `⚠️ sin verificar` |
 | `get_channel()` / `fetch_channel()` / `send(embed=...)` | [`src/dispatcher.py`](../../../src/dispatcher.py) (`AlertDispatcher`) | Envía `discord.Embed` de alertas; captura `Forbidden`/`NotFound` para auto-pausar el canal y `HTTPException` para loguear fallos. | `⚠️ sin verificar` |
 
 ---
@@ -40,4 +40,4 @@ Cuando se disponga de un `DISCORD_BOT_TOKEN` de pruebas, validar en vivo y actua
 
 ---
 
-> Creado: 2026-11-20 · Última revisión: 2026-11-20
+> Creado: 2026-11-20 · Última revisión: 2026-11-21

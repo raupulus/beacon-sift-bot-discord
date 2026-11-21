@@ -6,7 +6,8 @@
 
 - **Hace:**
   - Resuelve en `BotStorage` los canales activos (`is_paused = 0`) suscritos al `type` y con `min_priority_weight <= item.priority_weight`.
-  - Evita duplicados comprobando y registrando `(channel_id, item.id)` en `dispatched_items`.
+  - Reparte de forma concurrente y acotada (`max_concurrency=10`, cadencia global `min_interval_seconds=0.04` ≈ 25 msg/s) para escalar a cientos/miles de canales sin bloqueos secuenciales.
+  - Evita duplicados comprobando y registrando `(channel_id, item.id)` en `dispatched_items`, y dispara poda periódica por antigüedad (`prune_dispatched(retention_days=30)`) cada `prune_every` entregas (por defecto `250`).
   - Construye un único `discord.Embed` por noticia y lo envía resolviendo el canal desde caché (`get_channel`) o por API (`fetch_channel`).
   - Auto-pausa el canal si recibe `discord.Forbidden` o `discord.NotFound`, conservando sus filtros.
 - **NO hace:**
@@ -26,10 +27,11 @@ No define tablas ni modelos propios; consume `NewsItem` ([`src/models.py`](../..
 1. `dispatch_item(item: NewsItem) -> int`:
    - Llama a `await self.storage.get_matching_channels(item.type, item.priority_weight)`. Si está vacío, devuelve `0`.
    - Construye `embed = build_news_embed(item, show_thumbnail=self.settings.discord_show_thumbnails)`.
-   - Para cada `channel_id`:
+   - Lanza `_deliver_one(channel_id)` concurrentemente con `asyncio.Semaphore(self.max_concurrency)` y regulación global `_acquire_rate_slot()`:
      - Si `await self.storage.was_dispatched(channel_id, item.id)` → omite.
      - Llama a `_send_to_channel(channel_id, embed)`.
-     - Si devuelve `True` → `await self.storage.mark_dispatched(channel_id, item.id)` e incrementa `delivered`.
+     - Si devuelve `True` → `await self.storage.mark_dispatched(channel_id, item.id)`.
+   - Al terminar el lote, acumula `delivered` y dispara `prune_dispatched(retention_days=self.prune_retention_days)` cada `prune_every` entregas.
 2. `_send_to_channel(channel_id, embed)`:
    - Intenta `channel = self.client.get_channel(channel_id)`.
    - Si es `None` (no está en caché del Gateway o DM/hilo sin cachear), ejecuta `channel = await self.client.fetch_channel(channel_id)`.
@@ -41,7 +43,7 @@ No define tablas ni modelos propios; consume `NewsItem` ([`src/models.py`](../..
 
 ## 4. Puntos de entrada (con auth, permisos y límites)
 
-- `AlertDispatcher(client, storage, settings)`
+- `AlertDispatcher(client, storage, settings, *, prune_every=250, prune_retention_days=30, max_concurrency=10, min_interval_seconds=0.04)`
 - `async def dispatch_item(self, item: NewsItem) -> int` *(invocado como callback `on_item` desde `ReverbListener`)*
 
 ---
@@ -64,7 +66,6 @@ No define tablas ni modelos propios; consume `NewsItem` ([`src/models.py`](../..
 ## 7. Trampas conocidas
 
 - **Rate limits `429` delegados en `discord.py`:** `AlertDispatcher` no captura explícitamente HTTP `429` porque `discord.py` gestiona internamente los *rate limit buckets* y `Retry-After`; aun así, si fallara finalmente lanzará `HTTPException`.
-- **Bloqueo secuencial de canal:** si muchos canales requieren `fetch_channel()` (p. ej. caché fría) o entran en *rate limit*, el bucle `for channel_id in channel_ids` procesa secuencialmente.
 - **Canal no textual:** si existiese un `channel_id` correspondiente a un objeto sin `.send()` (ej. canal de categoría o voz sin texto), fallaría al invocar `channel.send` (`⚠️ sin verificar` en vivo; los comandos de suscripción solo pueden ejecutarse desde canales donde llegan interacciones).
 - **Envío real con `discord.Client` `⚠️ sin verificar`:** probado con `FakeDiscordClient` y `FakeChannel` en tests; pendiente validar contra servidor real.
 
@@ -74,6 +75,7 @@ No define tablas ni modelos propios; consume `NewsItem` ([`src/models.py`](../..
 
 - [`tests/test_dispatcher.py`](../../tests/test_dispatcher.py):
   - `test_dispatcher_sends_embeds_dedups_and_pauses_on_forbidden_or_not_found`: verifica filtrado por prioridad, envío por `get_channel`/`fetch_channel`, auto-pausa ante `Forbidden` (`403`) y `NotFound` (`404`) y deduplicación al reintentar el mismo `item.id`.
+  - `test_dispatcher_prunes_periodically_and_isolates_dynamic_types`: verifica aislamiento de tipos dinámicos por canal y disparo periódico de `prune_dispatched(retention_days=30)`.
 
 ---
 
@@ -84,4 +86,4 @@ No define tablas ni modelos propios; consume `NewsItem` ([`src/models.py`](../..
 
 ---
 
-> Creado: 2026-11-20 · Última revisión: 2026-11-20
+> Creado: 2026-11-20 · Última revisión: 2026-11-21

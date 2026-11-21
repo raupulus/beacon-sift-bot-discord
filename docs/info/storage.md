@@ -8,7 +8,7 @@
   - Persiste de forma asíncrona en SQLite (`aiosqlite`, modo `WAL`, `foreign_keys=ON`) canales, suscripciones, estado de pausa, deduplicación de envíos y cursor global `last_processed_item_id`.
 - **NO hace:**
   - No accede a PostgreSQL de `web/`, no guarda textos de noticias ni credenciales.
-  - No ejecuta poda periódica automática de `dispatched_items` en segundo plano (aunque implementa `prune_dispatched()`).
+  - No gestiona hilos o cron propios (la poda por retención `prune_dispatched(retention_days=30)` es invocada por `main.py` al arranque y por `AlertDispatcher` periódicamente).
 
 ---
 
@@ -40,7 +40,7 @@ Esquema creado por `BotStorage.initialize()` ([`src/storage.py#L34-L71`](../../s
 Clase `BotStorage(db_path: str | Path)`:
 - `initialize()`, `close()`
 - `subscribe()`, `unsubscribe()` (soporta `'all'` devolviendo `cursor.rowcount`), `list_subscriptions()` (ordena `'all'` primero y luego alfabéticamente), `set_paused()`, `is_paused()`, `get_matching_channels()`
-- `was_dispatched()`, `mark_dispatched()`, `prune_dispatched(keep_last=5000)`, `get_last_item_id()`, `set_last_item_id()`
+- `was_dispatched()`, `mark_dispatched()`, `prune_dispatched(retention_days=30)`, `get_last_item_id()`, `set_last_item_id()`
 
 ---
 
@@ -63,7 +63,6 @@ Clase `BotStorage(db_path: str | Path)`:
 
 - **Uso antes de `initialize()`:** `_db()` lanza `RuntimeError("BotStorage no inicializado; llama antes a initialize().")`.
 - **Diferencia entre `subscribe(..., 'all', ...)` y `unsubscribe(..., 'all')`:** la primera crea una regla `'all'`; la segunda elimina **todas** las suscripciones del `channel_id`.
-- **Crecimiento indefinido de `dispatched_items`:** `prune_dispatched(keep_last=5000)` existe y pasa tests, pero **ningún módulo en `src/` lo invoca periódicamente aún**.
 - **Sin sistema de migraciones:** cambios futuros de esquema sobre `data/bot.db` existente requerirán migración explícita (`ALTER TABLE`).
 
 ---
@@ -73,14 +72,14 @@ Clase `BotStorage(db_path: str | Path)`:
 - [`tests/test_storage.py`](../../tests/test_storage.py):
   - `test_subscribe_update_and_unsubscribe`
   - `test_matching_channels_respects_priority_pause_and_dedup`
-  - `test_dispatched_deduplication_and_watermark`
+  - `test_dispatched_deduplication_and_watermark` (incluye `prune_dispatched(retention_days=30)`)
 
 ---
 
 ## 9. Pendiente real
 
-- Invocar `storage.prune_dispatched()` periódicamente (por ejemplo al arrancar en `setup_hook()` o tras un número dado de alertas enviadas) para acotar el tamaño de `dispatched_items`.
+- Ninguno actualmente.
 
 ---
 
-> Creado: 2026-11-20 · Última revisión: 2026-11-20
+> Creado: 2026-11-20 · Última revisión: 2026-11-21

@@ -34,7 +34,7 @@ uv sync --python 3.12
 
 # 2. Configurar variables de entorno
 cp .env.example .env
-# Rellenar DISCORD_BOT_TOKEN, DISCORD_ADMIN_IDS, WEB_API_BASE_URL, REVERB_WS_URL y REVERB_APP_KEY
+# Rellenar DISCORD_BOT_TOKEN, WEB_API_BASE_URL, REVERB_WS_URL y REVERB_APP_KEY
 
 # 3. Ejecutar lint y tests
 uv run ruff check src tests

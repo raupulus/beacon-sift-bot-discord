@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     )
 
     discord_bot_token: str = ""
-    discord_admin_ids: str = ""
     discord_dev_guild_id: str = ""
     allow_dm_subscriptions: bool = False
     discord_show_thumbnails: bool = True
@@ -41,20 +40,6 @@ class Settings(BaseSettings):
     @classmethod
     def _normalize_log_level(cls, value: object) -> str:
         return str(value or "INFO").strip().upper()
-
-    @property
-    def admin_ids(self) -> set[int]:
-        """Devuelve los IDs numéricos de administradores globales configurados."""
-        ids: set[int] = set()
-        for chunk in self.discord_admin_ids.split(","):
-            clean = chunk.strip()
-            if not clean:
-                continue
-            try:
-                ids.add(int(clean))
-            except ValueError:
-                continue
-        return ids
 
     @property
     def dev_guild_id(self) -> int | None:

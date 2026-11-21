@@ -61,8 +61,9 @@ class BeaconDiscordBot(discord.Client):
         self._reverb_task: asyncio.Task[None] | None = None
 
     async def setup_hook(self) -> None:
-        """Inicializa SQLite, registra/sincroniza los 11 slash commands y arranca Reverb."""
+        """Inicializa SQLite, poda historial antiguo, sincroniza comandos y arranca Reverb."""
         await self.storage.initialize()
+        await self.storage.prune_dispatched(retention_days=30)
         register_commands(self.tree, self.app_ctx)
 
         if self.settings.dev_guild_id is not None:

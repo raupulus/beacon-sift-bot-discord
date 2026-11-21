@@ -148,7 +148,7 @@ async def test_registers_exact_contract_commands_and_runs_info_commands(tmp_path
     storage = BotStorage(tmp_path / "bot.db")
     await storage.initialize()
     api_client = BeaconApiClient("http://localhost:8000", transport=_api_transport())
-    settings = Settings(discord_admin_ids="999")
+    settings = Settings()
     dispatcher = AlertDispatcher(SimpleNamespace(), storage, settings)
     reverb = ReverbListener(
         "ws://localhost:8080", "k", "beacon.news", api_client, storage, dispatcher.dispatch_item
@@ -250,7 +250,7 @@ async def test_subscription_commands_permissions_and_lifecycle(tmp_path: Path) -
     storage = BotStorage(tmp_path / "bot.db")
     await storage.initialize()
     api_client = BeaconApiClient("http://localhost:8000", transport=_api_transport())
-    settings = Settings(discord_admin_ids="999", allow_dm_subscriptions=False)
+    settings = Settings(allow_dm_subscriptions=False)
     dispatcher = AlertDispatcher(SimpleNamespace(), storage, settings)
     reverb = ReverbListener(
         "ws://localhost:8080", "k", "beacon.news", api_client, storage, dispatcher.dispatch_item
@@ -287,8 +287,8 @@ async def test_subscription_commands_permissions_and_lifecycle(tmp_path: Path) -
         )
         assert "Suscripción guardada" in i_sub.followup.messages[0]["content"]
 
-        # Pause, filters, resume
-        i_pause = _make_interaction(channel_id=777, user_id=999)  # Global DISCORD_ADMIN_IDS
+        # Pause, filters, resume (administrador del servidor)
+        i_pause = _make_interaction(channel_id=777, user_id=20, administrator=True)
         await cmds["pause"].callback(i_pause)
         assert "pausadas" in i_pause.followup.messages[0]["content"]
 
@@ -296,7 +296,7 @@ async def test_subscription_commands_permissions_and_lifecycle(tmp_path: Path) -
         await cmds["filters"].callback(i_filters)
         assert "Pausado" in i_filters.followup.messages[0]["embed"].description
 
-        i_resume = _make_interaction(channel_id=777, user_id=999)
+        i_resume = _make_interaction(channel_id=777, user_id=20, manage_channels=True)
         await cmds["resume"].callback(i_resume)
         assert "reanudadas" in i_resume.followup.messages[0]["content"]
 

@@ -5,8 +5,8 @@
 ## 1. Qué hace y qué NO hace
 
 - **Hace:**
-  - Carga y normaliza las 13 variables de entorno del bot mediante `pydantic-settings` (`Settings`).
-  - Parsea `DISCORD_ADMIN_IDS` (lista separada por comas) y `DISCORD_DEV_GUILD_ID` (`int | None`) tolerando valores vacíos o no numéricos.
+  - Carga y normaliza las 12 variables de entorno del bot mediante `pydantic-settings` (`Settings`).
+  - Parsea `DISCORD_DEV_GUILD_ID` (`int | None`) tolerando valores vacíos o no numéricos.
   - Define la enumeración `Priority` (`low`, `medium`, `high`, `critical`) con `weight`, `label_es`, `emoji`, `color_int` (colores HUD) y `parse()`.
   - Define los DTOs inmutables (`frozen=True, slots=True`) para deserializar respuestas JSON de `web/` y suscripciones locales (`SourceSummary`, `NewsItem`, `SourceInfo`, `TypeInfo`, `ApiStatus`, `Subscription`).
 - **NO hace:**
@@ -45,7 +45,7 @@
 
 ## 4. Puntos de entrada (con auth, permisos y límites)
 
-- `Settings` + propiedades `admin_ids -> set[int]` y `dev_guild_id -> int | None`.
+- `Settings` + propiedad `dev_guild_id -> int | None`.
 - `Priority.parse(value: str | None) -> Priority | None` y métodos `from_api_dict()` en cada DTO.
 
 > `NewsItem.from_api_dict` requiere `data["id"]` convertible a `int` (lanza `KeyError` o `ValueError` si falta o no es entero).
@@ -66,9 +66,8 @@ Declaradas en [`src/config.py`](../../src/config.py) y [`.env.example`](../../.e
 | Variable (`.env`) | Atributo `Settings` | Valor por defecto | Efecto |
 |---|---|---|---|
 | `DISCORD_BOT_TOKEN` | `discord_bot_token` | `""` | Token del bot; `main()` aborta con `exit(1)` si está vacío. |
-| `DISCORD_ADMIN_IDS` | `discord_admin_ids` | `""` | IDs numéricos separados por coma con bypass administrativo global. |
 | `DISCORD_DEV_GUILD_ID` | `discord_dev_guild_id` | `""` | Snowflake opcional para sincronizar comandos en un servidor de pruebas al arrancar. |
-| `ALLOW_DM_SUBSCRIPTIONS` | `allow_dm_subscriptions` | `False` | Permite (`true`) o deniega (`false`) configurar alertas por DM a usuarios no listados en `DISCORD_ADMIN_IDS`. |
+| `ALLOW_DM_SUBSCRIPTIONS` | `allow_dm_subscriptions` | `False` | Permite (`true`) o deniega (`false`) configurar alertas por DM. |
 | `DISCORD_SHOW_THUMBNAILS` | `discord_show_thumbnails` | `True` | Añade `thumbnail` al *Embed* de alerta cuando `image_url` es HTTP/HTTPS válido. |
 | `WEB_API_BASE_URL` | `web_api_base_url` | `"http://127.0.0.1:8000"` | URL base HTTP de `web/`. |
 | `WEB_API_TIMEOUT_SECONDS` | `web_api_timeout_seconds` | `10.0` | Timeout de `httpx` contra `web/`. |
@@ -83,21 +82,22 @@ Declaradas en [`src/config.py`](../../src/config.py) y [`.env.example`](../../.e
 
 ## 7. Trampas conocidas
 
-- **Valores inválidos ignorados silenciosamente:** tanto `admin_ids` como `dev_guild_id` ignoran valores no enteros devolviendo conjunto vacío o `None` (un error tipográfico en `DISCORD_DEV_GUILD_ID` haría sincronizar globalmente sin aviso).
+- **Valores inválidos ignorados silenciosamente:** `dev_guild_id` ignora valores no enteros devolviendo `None` (un error tipográfico en `DISCORD_DEV_GUILD_ID` haría sincronizar globalmente sin aviso).
 - **Fallback silencioso en `NewsItem.from_api_dict`:** una prioridad desconocida desde la API cae a `Priority.LOW`.
 
 ---
 
 ## 8. Tests que lo cubren
 
+- [`tests/test_main_and_config.py`](../../tests/test_main_and_config.py) — verifica normalización de URLs/`log_level`, `Settings.dev_guild_id` y `_parse_iso_datetime()`.
 - [`tests/test_api_client.py`](../../tests/test_api_client.py), [`tests/test_embeds.py`](../../tests/test_embeds.py), [`tests/test_dispatcher.py`](../../tests/test_dispatcher.py), [`tests/test_commands.py`](../../tests/test_commands.py) ejercitan `Settings`, `Priority` (`color_int`, `weight`, `parse`), zona horaria y los DTOs.
 
 ---
 
 ## 9. Pendiente real
 
-- Añadir tests unitarios específicos para `Settings.admin_ids`, `Settings.dev_guild_id` y `_parse_iso_datetime()` si se amplía la validación de configuración.
+- Ninguno actualmente.
 
 ---
 
-> Creado: 2026-11-20 · Última revisión: 2026-11-20
+> Creado: 2026-11-20 · Última revisión: 2026-11-21
