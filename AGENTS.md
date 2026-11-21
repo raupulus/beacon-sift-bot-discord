@@ -20,6 +20,7 @@ Bot de **Discord** escrito en **Python 3.12+** con `discord.py` y empaquetado co
 bot-discord/
 ├── AGENTS.md                           # Reglas, arquitectura y protocolo residente de documentación
 ├── CLAUDE.md                           # Puntero obligatorio a AGENTS.md
+├── LICENSE                             # Licencia GNU GPLv3 (GPL-3.0-or-later)
 ├── README.md                           # Documentación general y autoría
 ├── .python-version                     # Versión fijada (3.12)
 ├── .env.example                        # Variables de entorno sin secretos
@@ -191,6 +192,7 @@ Protocolo obligatorio aplicable a **todas** las tareas presentes y futuras en es
 ## 7. Privacidad, autoría y seguridad
 
 - **Autor:** Raúl Caro Pastorino (`@raupulus`) — [https://raupulus.dev](https://raupulus.dev)
+- **Licencia:** GNU General Public License v3.0 (`GPL-3.0-or-later`, ver [`LICENSE`](./LICENSE))
 - **Correo personal estrictamente prohibido:** NUNCA utilizar bajo ningún concepto ningún correo personal o privado del creador.
 - **Único correo público permitido:** `public@raupulus.dev`
 - **Sin secretos en el repositorio:** Nunca versionar tokens de Discord (`DISCORD_BOT_TOKEN`), archivos `.env`, bases SQLite locales (`data/`) ni rutas privadas. Usar siempre `.env.example`.

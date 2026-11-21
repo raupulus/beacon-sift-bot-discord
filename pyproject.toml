@@ -7,6 +7,8 @@ name = "beacon-sift-bot-discord"
 version = "0.1.0"
 description = "Bot de Discord en Python para beacon-sift (feed.raupulus.dev): alertas en tiempo real con Embeds por prioridad y slash commands."
 readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 authors = [
     { name = "Raúl Caro Pastorino", email = "public@raupulus.dev" },
