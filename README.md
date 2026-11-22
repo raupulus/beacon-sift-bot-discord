@@ -7,6 +7,9 @@
 
 Servicio independiente en **Python 3.12 + Docker** que distribuye en tiempo real hacia canales de **Discord** las noticias técnicas, avisos locales y alertas CVE agregadas por [`feed.raupulus.dev`](https://feed.raupulus.dev) mediante *Embeds* con paleta radar HUD y *slash commands*.
 
+> **Instancia pública lista para usar:**
+> - **Invitar a tu servidor de Discord:** [Añadir Raupulus Feed Bot a Discord](https://discord.com/oauth2/authorize?client_id=1573834712798208050&permissions=274877926400&integration_type=0&scope=bot+applications.commands) *(añádelo a tu servidor y configura cada canal con `/subscribe`)*
+
 ---
 
 ## Objetivo del servicio
